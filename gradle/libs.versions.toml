@@ -1,0 +1,30 @@
+[versions]
+agp = "8.13.0"
+detekt = "1.23.6"
+gradle-publish-plugin = "2.1.1"
+kotlin = "2.3.20"
+kotlinx-serialization = "1.11.0"
+okhttp = "5.4.0"
+ktxml = "1.0.0"
+mockk = "1.14.6"
+
+[libraries]
+agp = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+ktxml = { group = "org.kobjects.ktxml", name = "core", version.ref = "ktxml"}
+
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver3", version.ref = "okhttp" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+
+detekt-formating-rules = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
+
+[bundles]
+okhttp = ["okhttp", "okhttp-logging"]
+tests = ["kotlin-test", "okhttp-mockwebserver", "mockk"]
+
+[plugins]
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+gradle-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-publish-plugin" }
