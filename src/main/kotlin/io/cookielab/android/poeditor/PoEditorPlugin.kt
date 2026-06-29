@@ -1,14 +1,14 @@
 package io.cookielab.android.poeditor
 
-import com.android.build.gradle.BaseExtension
 import io.cookielab.android.poeditor.common.SubprojectInfo
 import io.cookielab.android.poeditor.download.DownloadPoEditorStringsTask
 import io.cookielab.android.poeditor.verify.VerifyPoEditorStringsTask
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.register
+import java.lang.reflect.Method
 
 /**
  * Main class for POEditor sync plugin.
@@ -79,16 +79,54 @@ public class PoEditorPlugin : Plugin<Project> {
      */
     private fun captureAndroidSubprojects(target: Project): List<SubprojectInfo> {
         return target.subprojects
-            .filter { subproject -> androidPlugins.any { pluginId -> subproject.plugins.hasPlugin(pluginId) } }
-            .map { subproject ->
+            .mapNotNull { subproject ->
                 SubprojectInfo(
                     path = subproject.path,
-                    resourceDirs = subproject.extensions.getByType(BaseExtension::class)
-                        .sourceSets.getByName("main")
-                        .res
-                        .srcDirs
-                        .mapTo(mutableSetOf()) { it.absolutePath },
+                    resourceDirs = subproject.androidResourceDirs() ?: return@mapNotNull null,
                 )
             }
+    }
+
+    private fun Project.androidResourceDirs(): Set<String>? {
+        return androidSourceSets()
+            ?.getByName("main")
+            ?.callGetter("res")
+            ?.resourceDirectoryNotations()
+            ?.let { resourceDirectories ->
+                files(resourceDirectories)
+                    .files
+                    .mapTo(mutableSetOf()) { it.absolutePath }
+            }
+    }
+
+    private fun Project.androidSourceSets(): NamedDomainObjectContainer<*>? {
+        return extensions
+            .findByName("android")
+            ?.takeIf { androidPlugins.any { pluginId -> plugins.hasPlugin(pluginId) } }
+            ?.callGetter("sourceSets") as? NamedDomainObjectContainer<*>
+    }
+
+    private fun Any.resourceDirectoryNotations(): Iterable<Any?>? {
+        return (callGetter("directories") ?: callGetter("srcDirs"))?.asFileNotations()
+    }
+
+    private fun Any.callGetter(propertyName: String): Any? {
+        val getterName = "get" + propertyName.replaceFirstChar(Char::uppercaseChar)
+        return javaClass
+            .methods
+            .firstOrNull { method -> method.isNoArgGetter(getterName) }
+            ?.invoke(this)
+    }
+
+    private fun Method.isNoArgGetter(getterName: String): Boolean {
+        return name == getterName && parameterCount == 0
+    }
+
+    private fun Any.asFileNotations(): Iterable<Any?> {
+        return when (this) {
+            is Iterable<*> -> this
+            is Array<*> -> asIterable()
+            else -> listOf(this)
+        }
     }
 }
