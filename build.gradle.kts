@@ -18,13 +18,13 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation(libs.agp)
     implementation(libs.bundles.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktxml)
     detektPlugins(libs.detekt.formating.rules)
 
     testImplementation(libs.bundles.tests)
+    testImplementation(gradleTestKit())
 }
 
 tasks.test {
