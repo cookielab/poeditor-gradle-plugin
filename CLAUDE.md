@@ -77,7 +77,7 @@ The plugin operates in three main phases during task execution:
    - Captures subproject metadata inside `gradle.projectsEvaluated { … }`, **not** eagerly during `apply()` — at `apply()` time the subprojects may not have applied their Android plugins yet, so `plugins.hasPlugin(...)` returns false and the captured list comes back empty (a silently passing verify / a no-op download). `projectsEvaluated` guarantees the plugins and their resource source sets are in place. The captured `SubprojectInfo` list is then set on both tasks (avoiding the deprecated `project` accessor during execution)
    - Uses `project.path` (not `project.name`) to get full Gradle project paths like `:feature:parent:leaf`
    - Only processes Android subprojects (application, library, or dynamic-feature plugins)
-   - Extracts resource directory paths from subprojects via `BaseExtension.sourceSets`
+   - Extracts resource directory paths from the subproject's `android` extension **reflectively**, which keeps the plugin AGP-version-agnostic: `PoEditorPlugin` looks up the extension by name (`extensions.findByName("android")`) and walks it via no-arg getters (`callGetter`): `sourceSets` → `getByName("main")` → `res` → `directories` (falling back to `srcDirs`), then resolves the resulting file notations through `project.files(...)` to absolute paths
 
 2. **Download Phase** (`PoEditorTermsDownloader`, behind the `TermsDownloader` interface)
    - Downloads translations from POEditor API for configured languages **sequentially** (no parallelization)
